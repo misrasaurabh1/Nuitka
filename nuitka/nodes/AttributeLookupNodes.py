@@ -33,9 +33,10 @@ class ExpressionAttributeLookup(ExpressionAttributeLookupBase):
         )
 
     def mayRaiseException(self, exception_type):
-        return self.subnode_expression.mayRaiseException(
+        subnode_expression = self.subnode_expression
+        return subnode_expression.mayRaiseException(
             exception_type
-        ) or self.subnode_expression.mayRaiseExceptionAttributeLookup(
+        ) or subnode_expression.mayRaiseExceptionAttributeLookup(
             exception_type=exception_type, attribute_name=self.attribute_name
         )
 
