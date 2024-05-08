@@ -1481,89 +1481,74 @@ _builtin_ignore_list = (
 
 def _describeNewNode(builtin_name, inspect_node):
     """Describe the change for better understanding."""
-
-    # Don't mention side effects, that's not what we care about.
-    if inspect_node.isExpressionSideEffects():
-        inspect_node = inspect_node.subnode_expression
+    inspect_node = (
+        inspect_node.subnode_expression
+        if inspect_node.isExpressionSideEffects()
+        else inspect_node
+    )
 
     if inspect_node.isExpressionBuiltinImport():
-        tags = "new_import"
-        message = """\
-Replaced dynamic "__import__" call with static built-in call."""
+        tags, template_message = (
+            "new_import",
+            'Replaced dynamic "__import__" call with static built-in call.',
+        )
     elif inspect_node.isExpressionBuiltin() or inspect_node.isStatementExec():
-        tags = "new_builtin"
-        message = "Replaced call to built-in '%s' with built-in call '%s'." % (
-            builtin_name,
-            inspect_node.kind,
+        tags, template_message = (
+            "new_builtin",
+            "Replaced call to built-in '%s' with built-in call '%s'.",
         )
     elif inspect_node.isExpressionRaiseException():
-        tags = "new_raise"
-        message = """\
-Replaced call to built-in '%s' with exception raise.""" % (
-            builtin_name,
+        tags, template_message = (
+            "new_raise",
+            "Replaced call to built-in '%s' with exception raise.",
         )
-    elif inspect_node.isExpressionOperationBinary():
-        tags = "new_expression"
-        message = """\
-Replaced call to built-in '%s' with binary operation '%s'.""" % (
-            builtin_name,
-            inspect_node.getOperator(),
+    elif (
+        inspect_node.isExpressionOperationBinary()
+        or inspect_node.isExpressionOperationUnary()
+    ):
+        tags, template_message = (
+            "new_expression",
+            "Replaced call to built-in '%s' with {} operation '%s'.",
         )
-    elif inspect_node.isExpressionOperationUnary():
-        tags = "new_expression"
-        message = """\
-Replaced call to built-in '%s' with unary operation '%s'.""" % (
-            builtin_name,
-            inspect_node.getOperator(),
-        )
+        op = "binary" if inspect_node.isExpressionOperationBinary() else "unary"
+        template_message = template_message.format(op)
     elif inspect_node.isExpressionCall():
-        tags = "new_expression"
-        message = """\
-Replaced call to built-in '%s' with call.""" % (
-            builtin_name,
+        tags, template_message = (
+            "new_expression",
+            "Replaced call to built-in '%s' with call.",
         )
-    elif inspect_node.isExpressionOutlineBody():
-        tags = "new_expression"
-        message = (
-            """\
-Replaced call to built-in '%s' with outlined call."""
-            % builtin_name
+    elif (
+        inspect_node.isExpressionOutlineBody() or inspect_node.isExpressionConstantRef()
+    ):
+        tags, template_message = (
+            "new_expression",
+            "Replaced call to built-in '%s' with {}.",
         )
-    elif inspect_node.isExpressionConstantRef():
-        tags = "new_expression"
-        message = (
-            """\
-Replaced call to built-in '%s' with constant value."""
-            % builtin_name
+        replacement = (
+            "outlined call"
+            if inspect_node.isExpressionOutlineBody()
+            else "constant value"
         )
+        template_message = template_message.format(replacement)
     else:
         assert False, (builtin_name, "->", inspect_node)
 
+    message = (
+        template_message % builtin_name
+        if "%s" in template_message
+        else template_message
+    )
     return tags, message
 
 
 def computeBuiltinCall(builtin_name, call_node):
-    # There is some dispatching for how to output various types of changes,
-    # with lots of cases.
     if builtin_name in _dispatch_dict:
         new_node = _dispatch_dict[builtin_name](call_node)
-
-        assert new_node is not call_node, builtin_name
-        assert new_node is not None, builtin_name
-
-        # For traces, we are going to ignore side effects, and output traces
-        # only based on the basis of it.
+        assert new_node is not call_node and new_node is not None, builtin_name
         tags, message = _describeNewNode(builtin_name, new_node)
-
         return new_node, tags, message
-    else:
-        # TODO: Achieve coverage of all built-ins in at least the ignore list.
-        # if False and builtin_name not in _builtin_ignore_list:
-        #     optimization_logger.warning(
-        #         "Not handling built-in %r, consider support." % builtin_name
-        #     )
 
-        return call_node, None, None
+    return call_node, None, None
 
 
 #     Part of "Nuitka", an optimizing Python compiler that is compatible and
