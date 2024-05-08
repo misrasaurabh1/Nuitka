@@ -401,7 +401,7 @@ class TempVariable(Variable):
         return self.variable_type == "bool"
 
     def getDescription(self):
-        return "temp variable '%s'" % self.variable_name
+        return f"temp variable '{self.variable_name}'"
 
     def initVariable(self, trace_collection):
         """Initialize variable in trace collection state."""
