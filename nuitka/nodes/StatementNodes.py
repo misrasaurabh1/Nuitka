@@ -185,7 +185,8 @@ class StatementExpressionOnly(StatementExpressionOnlyBase):
         return self.subnode_expression.mayHaveSideEffects()
 
     def mayRaiseException(self, exception_type):
-        return self.subnode_expression.mayRaiseException(exception_type)
+        subnode_expression = self.subnode_expression
+        return subnode_expression.mayRaiseException(exception_type)
 
     def computeStatement(self, trace_collection):
         # TODO: Maybe also have a variant that will not attempt dropping anymore, for nodes
