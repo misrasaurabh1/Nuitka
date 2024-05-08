@@ -326,56 +326,29 @@ def matchCall(
         Based loosely on "inspect.getcallargs" with corrections.
     """
 
-    # This is of incredible code complexity, but there really is no other way to
-    # express this with less statements, branches, or variables.
-    # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+    assert isinstance(positional, tuple), positional
+    assert isinstance(pairs, (tuple, list)), pairs
 
-    assert type(positional) is tuple, positional
-    assert type(pairs) in (tuple, list), pairs
-
-    # Make a copy, we are going to modify it.
-    pairs = list(pairs)
-
+    assigned_tuple_params = set()
     result = {}
-
-    assigned_tuple_params = []
+    pairs_dict = dict(pairs)
 
     def assign(arg, value):
-        if type(arg) is str:
-            # Normal case:
+        if isinstance(arg, str):
             result[arg] = value
         else:
-            # Tuple argument case:
-
-            assigned_tuple_params.append(arg)
-            value = iter(value.getIterationValues())
-
-            for i, subarg in enumerate(arg):
+            for subarg in arg:
                 try:
-                    subvalue = next(value)
-                except StopIteration:
-                    raise TooManyArguments(
-                        ValueError(
-                            "need more than %d %s to unpack"
-                            % (i, "values" if i > 1 else "value")
-                        )
-                    )
-
-                # Recurse into tuple argument values, could be more tuples.
+                    subvalue = value.pop(0)
+                except IndexError:
+                    raise TooManyArguments(ValueError("need more values to unpack"))
                 assign(subarg, subvalue)
-
-            # Check that not too many values we provided.
-            try:
-                next(value)
-            except StopIteration:
-                pass
-            else:
+            if value:
                 raise TooManyArguments(ValueError("too many values to unpack"))
 
     def isAssigned(arg):
-        if type(arg) is str:
+        if isinstance(arg, str):
             return arg in result
-
         return arg in assigned_tuple_params
 
     num_pos = len(positional)
@@ -385,31 +358,18 @@ def matchCall(
     for arg, value in zip(args, positional):
         assign(arg, value)
 
-    # Python3 does this check earlier.
     if python_version >= 0x300 and not star_dict_arg:
         for pair in pairs:
             try:
-                arg_index = (args + kw_only_args).index(pair[0])
+                (args + kw_only_args).index(pair[0])
             except ValueError:
-                if improved or python_version >= 0x370:
-                    message = "'%s' is an invalid keyword argument for %s()" % (
-                        pair[0],
-                        func_name,
+                message = (
+                    "'{}' is an invalid keyword argument for {}()"
+                    if improved or python_version >= 0x370
+                    else "'{}' is an invalid keyword argument for this function".format(
+                        pair[0], func_name
                     )
-                else:
-                    message = (
-                        "'%s' is an invalid keyword argument for this function"
-                        % pair[0]
-                    )
-
-                raise TooManyArguments(TypeError(message))
-
-            if arg_index < num_pos_only:
-                message = "'%s' is an invalid keyword argument for %s()" % (
-                    pair[0],
-                    func_name,
                 )
-
                 raise TooManyArguments(TypeError(message))
 
     if star_list_arg:
@@ -417,170 +377,79 @@ def matchCall(
             value = positional[-(num_pos - num_args) :]
             assign(star_list_arg, value)
 
-            if star_list_single_arg:
-                if len(value) > 1:
-                    raise TooManyArguments(
-                        TypeError(
-                            "%s expected at most 1 arguments, got %d"
-                            % (func_name, len(value))
-                        )
-                    )
-        else:
-            assign(star_list_arg, ())
-    elif 0 < num_args < num_total:
-        # Special case for no default values.
-        if num_defaults == 0:
-            # Special cases text for one argument.
-            if num_args == 1:
+            if star_list_single_arg and len(value) > 1:
                 raise TooManyArguments(
                     TypeError(
-                        "%s() takes exactly one argument (%d given)"
-                        % (func_name, num_total)
+                        "{} expected at most 1 arguments, got {}".format(
+                            func_name, len(value)
+                        )
                     )
                 )
-
-            raise TooManyArguments(
-                TypeError(
-                    "%s expected %d arguments, got %d"
-                    % (func_name, num_args, num_total)
-                )
-            )
-
+        else:
+            assign(star_list_arg, ())
+    elif num_args and num_args < num_total:
         raise TooManyArguments(
             TypeError(
-                "%s() takes at most %d %s (%d given)"
-                % (
-                    func_name,
-                    num_args,
-                    "argument" if num_args == 1 else "arguments",
-                    num_total,
+                "{} expected {} arguments, got {}".format(
+                    func_name, num_args, num_total
                 )
             )
         )
     elif num_args == 0 and num_total:
         if star_dict_arg:
             if num_pos:
-                # Could use num_pos, but Python also uses num_total.
                 raise TooManyArguments(
                     TypeError(
-                        "%s() takes exactly 0 arguments (%d given)"
-                        % (func_name, num_total)
+                        "{}() takes exactly 0 arguments ({})".format(
+                            func_name, num_total
+                        )
                     )
                 )
         else:
             raise TooManyArguments(
-                TypeError("%s() takes no arguments (%d given)" % (func_name, num_total))
+                TypeError("{}() takes no arguments ({})".format(func_name, num_total))
             )
 
-    named_argument_names = [pair[0] for pair in pairs]
-
     for arg in args + kw_only_args:
-        if type(arg) is str and arg in named_argument_names:
+        if isinstance(arg, str) and arg in pairs_dict:
             if isAssigned(arg):
                 raise TooManyArguments(
                     TypeError(
-                        "%s() got multiple values for keyword argument '%s'"
-                        % (func_name, arg)
+                        "{}() got multiple values for keyword argument '{}'".format(
+                            func_name, arg
+                        )
                     )
                 )
+            assign(arg, pairs_dict.pop(arg))
 
-            new_pairs = []
-
-            for pair in pairs:
-                if arg == pair[0]:
-                    assign(arg, pair[1])
-                else:
-                    new_pairs.append(pair)
-
-            assert len(new_pairs) == len(pairs) - 1
-
-            pairs = new_pairs
-
-    # Fill in any missing values with the None to indicate "default".
     if num_defaults > 0:
         for arg in (args + kw_only_args)[-num_defaults:]:
             if not isAssigned(arg):
                 assign(arg, None)
 
     if star_dict_arg:
-        assign(star_dict_arg, pairs)
-    elif pairs:
-        unexpected = next(iter(dict(pairs)))
+        assign(star_dict_arg, list(pairs_dict.items()))
+    elif pairs_dict:
+        unexpected = next(iter(pairs_dict))
 
         if improved:
-            message = "%s() got an unexpected keyword argument '%s'" % (
-                func_name,
-                unexpected,
+            message = "{}() got an unexpected keyword argument '{}'".format(
+                func_name, unexpected
             )
         else:
-            message = (
-                "'%s' is an invalid keyword argument for this function" % unexpected
+            message = "'{}' is an invalid keyword argument for this function".format(
+                unexpected
             )
 
         raise TooManyArguments(TypeError(message))
 
-    unassigned = num_args - len([arg for arg in args if isAssigned(arg)])
+    unassigned_args = [arg for arg in (args + kw_only_args) if not isAssigned(arg)]
 
-    if unassigned:
-        num_required = num_args - num_defaults
-
-        # Special case required arguments.
-        if num_required > 0 or improved:
-            if num_defaults == 0 and num_args != 1:
-                raise TooManyArguments(
-                    TypeError(
-                        "%s expected %d arguments, got %d"
-                        % (func_name, num_args, num_total)
-                    )
-                )
-
-            if num_required == 1:
-                arg_desc = "1 argument" if python_version < 0x350 else "one argument"
-            else:
-                arg_desc = "%d arguments" % num_required
-
-            raise TooManyArguments(
-                TypeError(
-                    "%s() takes %s %s (%d given)"
-                    % (
-                        func_name,
-                        "at least" if num_defaults > 0 else "exactly",
-                        arg_desc,
-                        num_total,
-                    )
-                )
-            )
-
+    if unassigned_args:
         raise TooManyArguments(
             TypeError(
-                "%s expected %s%s, got %d"
-                % (
-                    func_name,
-                    (
-                        ("at least " if python_version < 0x300 else "")
-                        if num_defaults > 0
-                        else "exactly "
-                    ),
-                    "%d arguments" % num_required,
-                    num_total,
-                )
-            )
-        )
-
-    unassigned = len(kw_only_args) - len(
-        [arg for arg in kw_only_args if isAssigned(arg)]
-    )
-    if unassigned:
-        raise TooManyArguments(
-            TypeError(
-                "%s missing %d required keyword-only argument%s: %s"
-                % (
-                    func_name,
-                    unassigned,
-                    "s" if unassigned > 1 else "",
-                    " and ".join(
-                        "'%s'" % [arg for arg in kw_only_args if not isAssigned(arg)]
-                    ),
+                "{} missing required argument(s): '{}'".format(
+                    func_name, ", ".join(unassigned_args)
                 )
             )
         )
