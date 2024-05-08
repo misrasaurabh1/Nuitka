@@ -2067,51 +2067,40 @@ _python_flags = None
 
 def _getPythonFlags():
     """*list*, values of ``--python-flag``"""
-    # There is many flags, pylint: disable=too-many-branches
-
-    # singleton, pylint: disable=global-statement
     global _python_flags
 
     if _python_flags is None:
         _python_flags = set()
 
+        flag_dict = {
+            "no_site": ["-S", "nosite", "no_site"],
+            "no_randomization": [
+                "-R",
+                "static_hashes",
+                "norandomization",
+                "no_randomization",
+            ],
+            "trace_imports": ["-v", "trace_imports", "trace_import"],
+            "no_warnings": ["no_warnings", "nowarnings"],
+            "no_asserts": ["-O", "no_asserts", "noasserts"],
+            "no_docstrings": ["no_docstrings", "nodocstrings", "-OO"],
+            "no_annotations": ["no_annotations", "noannotations"],
+            "unbuffered": ["unbuffered", "-u"],
+            "package_mode": ["-m", "package_mode"],
+            "isolated": ["-I", "isolated"],
+        }
+
         for parts in options.python_flags:
             for part in parts.split(","):
-                if part in ("-S", "nosite", "no_site"):
-                    _python_flags.add("no_site")
-                elif part in ("site",):
-                    if "no_site" in _python_flags:
-                        _python_flags.remove("no_site")
-                elif part in (
-                    "-R",
-                    "static_hashes",
-                    "norandomization",
-                    "no_randomization",
-                ):
-                    _python_flags.add("no_randomization")
-                elif part in ("-v", "trace_imports", "trace_import"):
-                    _python_flags.add("trace_imports")
-                elif part in ("no_warnings", "nowarnings"):
-                    _python_flags.add("no_warnings")
-                elif part in ("-O", "no_asserts", "noasserts"):
-                    _python_flags.add("no_asserts")
-                elif part in ("no_docstrings", "nodocstrings"):
-                    _python_flags.add("no_docstrings")
-                elif part in ("-OO",):
-                    _python_flags.add("no_docstrings")
-                    _python_flags.add("no_asserts")
-                elif part in ("no_annotations", "noannotations"):
-                    _python_flags.add("no_annotations")
-                elif part in ("unbuffered", "-u"):
-                    _python_flags.add("unbuffered")
-                elif part in ("-m", "package_mode"):
-                    _python_flags.add("package_mode")
-                elif part in ("-I", "isolated"):
-                    _python_flags.add("isolated")
+                for flag, keywords in flag_dict.items():
+                    if part in keywords:
+                        _python_flags.add(flag)
+                        break
                 else:
-                    Tracing.options_logger.sysexit(
-                        "Unsupported python flag '%s'." % part
-                    )
+                    Tracing.options_logger.sysexit(f"Unsupported python flag '{part}'.")
+
+                if "no_site" in _python_flags and "site" in part.split(","):
+                    _python_flags.remove("no_site")
 
     return _python_flags
 
@@ -2124,7 +2113,6 @@ def hasPythonFlagNoSite():
 
 def hasPythonFlagNoAnnotations():
     """*bool* = "no_annotations" in python flags given"""
-
     return "no_annotations" in _getPythonFlags()
 
 
