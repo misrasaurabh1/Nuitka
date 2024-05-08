@@ -412,7 +412,7 @@ class ExpressionImportModuleHard(
         return self.value_name
 
     def mayHaveSideEffects(self):
-        return self.module is None or not self.guaranteed
+        return not self.guaranteed
 
     def mayRaiseException(self, exception_type):
         return not self.allowed or self.mayHaveSideEffects()
