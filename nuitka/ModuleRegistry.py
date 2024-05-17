@@ -174,7 +174,7 @@ def getDoneModulesCount():
 
 
 def getDoneModules():
-    return sorted(done_modules, key=lambda module: (module.getFullName(), module.kind))
+    return [module for _, module in done_modules]
 
 
 def hasDoneModule(module_name):
@@ -293,6 +293,16 @@ def addModuleOptimizationTimeInformation(module_name, pass_number, time_used):
 
 def getModuleOptimizationTimingInfos(module_name):
     return module_timing_infos.get(module_name, ())
+
+
+def sort_key(module):
+    return module.getFullName(), module.kind
+
+
+def insert_module_sorted(module):
+    from bisect import insort
+
+    insort(done_modules, ((module.getFullName(), module.kind), module))
 
 
 #     Part of "Nuitka", an optimizing Python compiler that is compatible and
