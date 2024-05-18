@@ -1,6 +1,8 @@
 #     Copyright 2024, Kay Hayen, mailto:kay.hayen@gmail.com find license text at end of file
 
 
+from nuitka import Tracing
+
 """ Progress bars in Nuitka.
 
 This is responsible for wrapping the rendering of progress bar and emitting tracing
@@ -172,12 +174,14 @@ def closeProgressBar():
     Returns: int or None - if displayed, the total used last time.
     """
 
-    if Tracing.progress is not None:
+    progress = Tracing.progress
+
+    if progress is not None:
         # Retrieve that previous total, for repeated progress bars, it
         # can be used as a new minimum.
-        result = Tracing.progress.total
+        result = progress.total
 
-        Tracing.progress.close()
+        progress.close()
         Tracing.progress = None
 
         return result
