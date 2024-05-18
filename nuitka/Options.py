@@ -1,6 +1,9 @@
 #     Copyright 2024, Kay Hayen, mailto:kay.hayen@gmail.com find license text at end of file
 
 
+from nuitka import Tracing
+from nuitka import Tracing
+
 """ Options module
 
 This exposes the choices made by the user. Defaults will be applied here, and
@@ -2067,9 +2070,6 @@ _python_flags = None
 
 def _getPythonFlags():
     """*list*, values of ``--python-flag``"""
-    # There is many flags, pylint: disable=too-many-branches
-
-    # singleton, pylint: disable=global-statement
     global _python_flags
 
     if _python_flags is None:
@@ -2077,42 +2077,16 @@ def _getPythonFlags():
 
         for parts in options.python_flags:
             for part in parts.split(","):
-                if part in ("-S", "nosite", "no_site"):
-                    _python_flags.add("no_site")
-                elif part in ("site",):
-                    if "no_site" in _python_flags:
-                        _python_flags.remove("no_site")
-                elif part in (
-                    "-R",
-                    "static_hashes",
-                    "norandomization",
-                    "no_randomization",
-                ):
-                    _python_flags.add("no_randomization")
-                elif part in ("-v", "trace_imports", "trace_import"):
-                    _python_flags.add("trace_imports")
-                elif part in ("no_warnings", "nowarnings"):
-                    _python_flags.add("no_warnings")
-                elif part in ("-O", "no_asserts", "noasserts"):
-                    _python_flags.add("no_asserts")
-                elif part in ("no_docstrings", "nodocstrings"):
-                    _python_flags.add("no_docstrings")
-                elif part in ("-OO",):
-                    _python_flags.add("no_docstrings")
-                    _python_flags.add("no_asserts")
-                elif part in ("no_annotations", "noannotations"):
-                    _python_flags.add("no_annotations")
-                elif part in ("unbuffered", "-u"):
-                    _python_flags.add("unbuffered")
-                elif part in ("-m", "package_mode"):
-                    _python_flags.add("package_mode")
-                elif part in ("-I", "isolated"):
-                    _python_flags.add("isolated")
-                else:
+                try:
+                    _flag = _flags_map[part]
+                    if part == "site" and _flag in _python_flags:
+                        _python_flags.remove(_flag)
+                    else:
+                        _python_flags.add(_flag)
+                except KeyError:
                     Tracing.options_logger.sysexit(
                         "Unsupported python flag '%s'." % part
                     )
-
     return _python_flags
 
 
@@ -2124,7 +2098,6 @@ def hasPythonFlagNoSite():
 
 def hasPythonFlagNoAnnotations():
     """*bool* = "no_annotations" in python flags given"""
-
     return "no_annotations" in _getPythonFlags()
 
 
