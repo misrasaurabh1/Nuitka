@@ -174,7 +174,9 @@ def getDoneModulesCount():
 
 
 def getDoneModules():
-    return sorted(done_modules, key=lambda module: (module.getFullName(), module.kind))
+    return sorted(
+        done_modules, key=lambda module: (module.getFullName(), module.kind.__str__())
+    )
 
 
 def hasDoneModule(module_name):
