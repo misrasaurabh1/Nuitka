@@ -1,6 +1,8 @@
 #     Copyright 2024, Kay Hayen, mailto:kay.hayen@gmail.com find license text at end of file
 
 
+import os
+
 """ Utility module.
 
 Here the small things that fit nowhere else and don't deserve their own module.
