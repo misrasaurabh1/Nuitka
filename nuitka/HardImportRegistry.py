@@ -1,6 +1,10 @@
 #     Copyright 2024, Kay Hayen, mailto:kay.hayen@gmail.com find license text at end of file
 
 
+import os
+
+from nuitka.PythonVersions import python_version
+
 """ Registry for hard import data.
 
 Part of it is static, but modules can get at during scan by plugins that
@@ -95,19 +99,18 @@ def isHardModule(module_name):
     if module_name not in hard_modules:
         return False
 
-    min_version, max_version, os_limit = hard_modules_version.get(
-        module_name, (None, None, None)
-    )
+    module_info = hard_modules_version.get(module_name)
+    if module_info is None:
+        return True
 
-    if min_version is not None and python_version < min_version:
+    min_version, max_version, os_limit = module_info
+
+    if min_version and python_version < min_version:
         return False
-
-    if max_version is not None and python_version >= max_version:
+    if max_version and python_version >= max_version:
         return False
-
-    if os_limit is not None:
-        if os_limit == "win32":
-            return isWin32Windows()
+    if os_limit == "win32" and not isWin32Windows():
+        return False
 
     return True
 
