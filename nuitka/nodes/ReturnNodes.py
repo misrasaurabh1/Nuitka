@@ -1,6 +1,8 @@
 #     Copyright 2024, Kay Hayen, mailto:kay.hayen@gmail.com find license text at end of file
 
 
+from nuitka.nodes.NodeBases import StatementBase
+
 """ Return node
 
 This one exits functions. The only other exit is the default exit of functions with 'None' value, if no return is done.
