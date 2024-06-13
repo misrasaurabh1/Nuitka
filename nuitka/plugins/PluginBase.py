@@ -1,6 +1,8 @@
 #     Copyright 2024, Kay Hayen, mailto:kay.hayen@gmail.com find license text at end of file
 
 
+from nuitka.utils.SlotMetaClasses import getMetaClassBase
+
 """
 Plugins: Welcome to Nuitka! This is your shortest way to become part of it.
 
@@ -410,7 +412,7 @@ class NuitkaPluginBase(getMetaClassBase("Plugin", require_slots=False)):
         Returns:
             True or False
         """
-        # Virtual method, pylint: disable=no-self-use,unused-argument
+        # Return True for all implicitly imported modules
         return True
 
     def getImplicitImports(self, module):
