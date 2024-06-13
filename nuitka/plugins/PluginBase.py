@@ -1,6 +1,8 @@
 #     Copyright 2024, Kay Hayen, mailto:kay.hayen@gmail.com find license text at end of file
 
 
+from nuitka.utils.SlotMetaClasses import getMetaClassBase
+
 """
 Plugins: Welcome to Nuitka! This is your shortest way to become part of it.
 
@@ -390,7 +392,8 @@ class NuitkaPluginBase(getMetaClassBase("Plugin", require_slots=False)):
     @classmethod
     def isDetector(cls):
         """Is this a detection plugin, i.e. one which is only there to inform."""
-        return hasattr(cls, "detector_for")
+        # Use getattr with a default value of None which is faster than hasattr
+        return getattr(cls, "detector_for", None) is not None
 
     @classmethod
     def addPluginCommandLineOptions(cls, group):
