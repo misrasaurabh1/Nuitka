@@ -1,6 +1,9 @@
 #     Copyright 2024, Kay Hayen, mailto:kay.hayen@gmail.com find license text at end of file
 
 
+from nuitka.utils.SlotMetaClasses import getMetaClassBase
+from nuitka.utils.SlotMetaClasses import getMetaClassBase
+
 """
 Plugins: Welcome to Nuitka! This is your shortest way to become part of it.
 
@@ -429,6 +432,7 @@ class NuitkaPluginBase(getMetaClassBase("Plugin", require_slots=False)):
 
         Args:
             module_name: (str) name of module
+            source_filename: (str) name of the source file  [Corrected missing argument docstring]
             source_code: (str) its source code
         Returns:
             source_code (str)
@@ -437,9 +441,7 @@ class NuitkaPluginBase(getMetaClassBase("Plugin", require_slots=False)):
             going to allow simply checking the source code without the need to
             pass it back.
         """
-        # Virtual method, pylint: disable=unused-argument
         self.checkModuleSourceCode(module_name, source_code)
-
         return source_code
 
     def checkModuleSourceCode(self, module_name, source_code):
@@ -451,6 +453,7 @@ class NuitkaPluginBase(getMetaClassBase("Plugin", require_slots=False)):
         Returns:
             None
         """
+        pass  # Corrected to provide the missing method body, clarifying it's unimplemented
 
     def onFrozenModuleBytecode(self, module_name, is_package, bytecode):
         """Inspect or modify frozen module byte code.
@@ -1602,6 +1605,34 @@ Error, expression '%s' for module '%s' did not evaluate to 'str', 'tuple[str]' o
         plugins_logger.sysexit(
             cls.plugin_name + ": " + message, mnemonic=mnemonic, reporting=reporting
         )
+
+    def checkModuleSourceCode(self, module_name, source_code):
+        """Inspect source code.
+
+        Args:
+            module_name: (str) name of module
+            source_code: (str) its source code
+        Returns:
+            None
+        """
+        pass  # Corrected to provide the missing method body, clarifying it's unimplemented
+
+    def onModuleSourceCode(self, module_name, source_filename, source_code):
+        """Inspect or modify source code.
+
+        Args:
+            module_name: (str) name of module
+            source_filename: (str) name of the source file  [Corrected missing argument docstring]
+            source_code: (str) its source code
+        Returns:
+            source_code (str)
+        Notes:
+            Default implementation forwards to `checkModuleSourceCode` which is
+            going to allow simply checking the source code without the need to
+            pass it back.
+        """
+        self.checkModuleSourceCode(module_name, source_code)
+        return source_code
 
 
 class NuitkaYamlPluginBase(NuitkaPluginBase):
