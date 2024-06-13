@@ -1,6 +1,8 @@
 #     Copyright 2024, Kay Hayen, mailto:kay.hayen@gmail.com find license text at end of file
 
 
+from nuitka.utils.SlotMetaClasses import getMetaClassBase
+
 """
 Plugins: Welcome to Nuitka! This is your shortest way to become part of it.
 
@@ -626,12 +628,9 @@ class NuitkaPluginBase(getMetaClassBase("Plugin", require_slots=False)):
     def onModuleInitialSet(self):
         """Provide extra modules to the initial root module set.
 
-        Args:
-            None
         Returns:
-            Iterable of modules, may yield.
+            Iterable of modules.
         """
-        # Virtual method, pylint: disable=no-self-use
         return ()
 
     def onModuleCompleteSet(self, module_set):
