@@ -202,11 +202,8 @@ def _getEvaluationContext():
 
 
 def _convertVersionToTuple(version_str):
-    def numberize(v):
-        # For now, we ignore rc/post stuff, hoping it doesn't matter for us.
-        return int("".join(d for d in v if d.isdigit()))
-
-    return tuple(numberize(d) for d in version_str.split("."))
+    # Directly convert the digits in each segment to an integer
+    return tuple(int("".join(filter(str.isdigit, v))) for v in version_str.split("."))
 
 
 def _getPackageNameFromDistributionName(distribution_name):
