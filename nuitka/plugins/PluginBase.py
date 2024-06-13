@@ -1,6 +1,8 @@
 #     Copyright 2024, Kay Hayen, mailto:kay.hayen@gmail.com find license text at end of file
 
 
+from nuitka.utils.SlotMetaClasses import getMetaClassBase
+
 """
 Plugins: Welcome to Nuitka! This is your shortest way to become part of it.
 
@@ -834,7 +836,6 @@ Unwanted import of '%(unwanted)s' that %(problem)s '%(binding_name)s' encountere
             where the func will be called to create the content dynamically.
 
         """
-        # Virtual method, pylint: disable=no-self-use,unused-argument
         return ()
 
     def isAcceptableMissingDLL(self, package_name, dll_basename):
