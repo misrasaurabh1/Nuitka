@@ -1,6 +1,8 @@
 #     Copyright 2024, Kay Hayen, mailto:kay.hayen@gmail.com find license text at end of file
 
 
+from nuitka.__past__ import unicode
+
 """ C string encoding
 
 This contains the code to create string literals for C to represent the given
@@ -60,21 +62,20 @@ def _encodePythonStringToC(value):
 
 def encodePythonUnicodeToC(value):
     """Encode a string, so that it gives a wide C string literal."""
-    assert type(value) is unicode, type(value)
+    assert isinstance(value, unicode), type(value)
 
-    result = ""
+    result = []
 
     for c in value:
         cv = ord(c)
-
-        if c == "\\":
-            result += "\\\\"
-        elif 34 < cv < 128:
-            result += c
+        if cv == 92:  # ord('\\')
+            result.append(r"\\")
+        elif 34 < cv < 128:  # between '!' and '~'
+            result.append(c)
         else:
-            result += r"\x%04x" % cv
+            result.append(r"\x%04x" % cv)
 
-    return 'L"%s"' % result
+    return 'L"' + "".join(result) + '"'
 
 
 def encodePythonStringToC(value):
