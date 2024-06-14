@@ -38,7 +38,6 @@ class NuitkaPluginMatplotlib(NuitkaPluginBase):
     @staticmethod
     def isAlwaysEnabled():
         """Request to be always enabled."""
-
         return True
 
     @classmethod
