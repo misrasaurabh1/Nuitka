@@ -1,6 +1,8 @@
 #     Copyright 2024, Kay Hayen, mailto:kay.hayen@gmail.com find license text at end of file
 
 
+from nuitka.nodes.ExpressionBasesGenerated import ExpressionBuiltinMakeExceptionBase
+
 """ Nodes related to raising and making exceptions.
 
 """
