@@ -21,6 +21,7 @@ class StatementRaiseExceptionMixin(object):
     # Mixins are required to also specify slots
     __slots__ = ()
 
+    # Mixins are required to also specify slots
     @staticmethod
     def isStatementAborting():
         return True
