@@ -1,6 +1,8 @@
 #     Copyright 2024, Kay Hayen, mailto:kay.hayen@gmail.com find license text at end of file
 
 
+import os
+
 """ Recursion into other modules.
 
 """
@@ -282,10 +284,13 @@ def _decideRecursion(
 
 
 def isSameModulePath(path1, path2):
-    if os.path.basename(path1) == "__init__.py":
-        path1 = os.path.dirname(path1)
-    if os.path.basename(path2) == "__init__.py":
-        path2 = os.path.dirname(path2)
+    def normalize_path(path):
+        if path.endswith("__init__.py"):
+            return os.path.dirname(path)
+        return path
+
+    path1 = normalize_path(path1)
+    path2 = normalize_path(path2)
 
     return os.path.abspath(path1) == os.path.abspath(path2)
 
