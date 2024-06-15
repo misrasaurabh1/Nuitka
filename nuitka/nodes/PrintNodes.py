@@ -85,7 +85,6 @@ class StatementPrintNewline(StatementPrintNewlineBase):
 
     @staticmethod
     def mayRaiseException(exception_type):
-        # Output may always fail due to external reasons.
         return True
 
 
