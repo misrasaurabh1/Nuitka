@@ -62,7 +62,7 @@ def _encodePythonStringToC(value):
 
 def encodePythonUnicodeToC(value):
     """Encode a string, so that it gives a wide C string literal."""
-    assert isinstance(value, unicode), type(value)
+    assert type(value) is unicode, type(value)
 
     result = []
 
