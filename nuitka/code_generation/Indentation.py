@@ -16,7 +16,7 @@ def _indentedCode(codes, count):
 
 
 def indented(codes, level=1, vert_block=False):
-    if isinstance(codes, str):
+    if type(codes) is str:
         codes = codes.split("\n")
 
     if vert_block and codes != [""]:
