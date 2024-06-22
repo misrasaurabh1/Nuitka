@@ -9,9 +9,9 @@ to be the same as in templates.
 
 
 def _indentedCode(codes, count):
+    count_str = " " * count
     return "\n".join(
-        " " * count + line if (line and not line.startswith("#")) else line
-        for line in codes
+        (count_str + line) if line and line[0] != "#" else line for line in codes
     )
 
 
@@ -20,8 +20,7 @@ def indented(codes, level=1, vert_block=False):
         codes = codes.split("\n")
 
     if vert_block and codes != [""]:
-        codes.insert(0, "")
-        codes.append("")
+        codes = [""] + codes + [""]
 
     return _indentedCode(codes, level * 4)
 
